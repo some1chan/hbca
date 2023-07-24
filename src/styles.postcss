@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* open-sans-300 - cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese */
+@font-face {
+	font-display: fallback; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+	font-family: "Open Sans";
+	font-style: normal;
+	font-weight: 300;
+	src: url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-300.woff2")
+			format("woff2"),
+		/* Chrome 36+, Opera 23+, Firefox 39+ */
+			url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-300.woff")
+			format("woff"); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* open-sans-regular - cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese */
+@font-face {
+	font-display: fallback; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+	font-family: "Open Sans";
+	font-style: normal;
+	font-weight: 400;
+	src: url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-regular.woff2")
+			format("woff2"),
+		/* Chrome 36+, Opera 23+, Firefox 39+ */
+			url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-regular.woff")
+			format("woff"); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* open-sans-italic - cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese */
+@font-face {
+	font-display: fallback; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+	font-family: "Open Sans";
+	font-style: italic;
+	font-weight: 400;
+	src: url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-italic.woff2")
+			format("woff2"),
+		/* Chrome 36+, Opera 23+, Firefox 39+ */
+			url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-italic.woff")
+			format("woff"); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* open-sans-500 - cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese */
+@font-face {
+	font-display: fallback; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+	font-family: "Open Sans";
+	font-style: normal;
+	font-weight: 500;
+	src: url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-500.woff2")
+			format("woff2"),
+		/* Chrome 36+, Opera 23+, Firefox 39+ */
+			url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-500.woff")
+			format("woff"); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* open-sans-700 - cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese */
+@font-face {
+	font-display: fallback; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+	font-family: "Open Sans";
+	font-style: normal;
+	font-weight: 700;
+	src: url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-700.woff2")
+			format("woff2"),
+		/* Chrome 36+, Opera 23+, Firefox 39+ */
+			url("./fonts/open-sans-v34-cyrillic_cyrillic-ext_greek_greek-ext_hebrew_latin_latin-ext_vietnamese-700.woff")
+			format("woff"); /* Chrome 5+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+:root {
+	font-family: "Open Sans", Avenir, Helvetica, Arial, sans-serif, "system-ui";
+	font-size: 16px;
+	line-height: 24px;
+	font-weight: 400;
+
+	@apply bg-white dark:bg-black;
+
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
+}
+
+@layer utilities {
+	.scrollbar::-webkit-scrollbar {
+		@apply w-2 h-2;
+	}
+
+	.scrollbar::-webkit-scrollbar-track {
+		@apply rounded-[100vh] hover:bg-slate-100 hover:dark:bg-slate-900;
+	}
+
+	.scrollbar::-webkit-scrollbar-thumb {
+		/* background: #e0cbcb; */
+		@apply bg-slate-300 hover:bg-slate-500;
+		border-radius: 100vh;
+		/* border: 3px solid #00000000; */
+	}
+	/* 
+	.scrollbar::-webkit-scrollbar-thumb:hover {
+		background: #c0a0b9;
+	} */
+
+	@supports (scrollbar-color: red blue) {
+		* {
+			scrollbar-color:
+				/* rgb(71 85 105) */
+				/* rgb(203 213 225) */ rgb(
+					100 116 139
+				)
+				rgb(241 245 249);
+			/* red blue; */
+			scrollbar-width: slim;
+		}
+	}
+}
