@@ -434,6 +434,10 @@
 	<div class="m-2 mx-4">
 		<div class="format py-6 select-none">
 			<h1 class="mb-2">high budget control application™</h1>
+			<!-- svelte-ignore missing-declaration -->
+			<p class="select-text">
+				You're currently running version {APP_VERSION} (git hash {COMMIT_HASH}).
+			</p>
 			<p>A few important things:</p>
 			<ul>
 				<li>
