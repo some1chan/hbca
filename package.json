@@ -1,38 +1,46 @@
 {
-  "name": "musician",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite --host",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json",
-    "tauri": "tauri"
-  },
-  "dependencies": {
-    "@bonosoft/sveltekit-qrcode": "^0.0.3",
-    "@tauri-apps/api": "^1.3.0",
-    "flowbite": "^1.6.5",
-    "peerjs": "^1.4.7",
-    "svelte-meta-tags": "^2.8.0",
-    "tone": "^14.7.77"
-  },
-  "devDependencies": {
-    "@changesets/cli": "^2.26.2",
-    "@sveltejs/vite-plugin-svelte": "^2.4.1",
-    "@tauri-apps/cli": "^1.3.1",
-    "@tsconfig/svelte": "^4.0.1",
-    "@types/node": "^18.16.16",
-    "autoprefixer": "^10.4.14",
-    "flowbite-typography": "^1.0.3",
-    "postcss": "^8.4.24",
-    "svelte": "^3.59.1",
-    "svelte-check": "^3.4.3",
-    "svelte-preprocess": "^5.0.4",
-    "tailwindcss": "^3.3.2",
-    "tslib": "^2.5.2",
-    "typescript": "^5.0.4",
-    "vite": "^4.3.9"
-  }
+	"name": "musician",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"commit": "cz",
+		"dev": "vite --host",
+		"build": "vite build",
+		"preview": "vite preview",
+		"check": "svelte-check --tsconfig ./tsconfig.json",
+		"tauri": "tauri"
+	},
+	"dependencies": {
+		"@bonosoft/sveltekit-qrcode": "^0.0.3",
+		"@tauri-apps/api": "^1.3.0",
+		"flowbite": "^1.6.5",
+		"peerjs": "^1.4.7",
+		"svelte-meta-tags": "^2.8.0",
+		"tone": "^14.7.77"
+	},
+	"devDependencies": {
+		"@changesets/cli": "^2.26.2",
+		"@sveltejs/vite-plugin-svelte": "^2.4.1",
+		"@tauri-apps/cli": "^1.3.1",
+		"@tsconfig/svelte": "^4.0.1",
+		"@types/node": "^18.16.16",
+		"autoprefixer": "^10.4.14",
+		"commitizen": "^4.3.0",
+		"cz-conventional-changelog": "^3.3.0",
+		"flowbite-typography": "^1.0.3",
+		"postcss": "^8.4.24",
+		"svelte": "^3.59.1",
+		"svelte-check": "^3.4.3",
+		"svelte-preprocess": "^5.0.4",
+		"tailwindcss": "^3.3.2",
+		"tslib": "^2.5.2",
+		"typescript": "^5.0.4",
+		"vite": "^4.3.9"
+	},
+	"config": {
+		"commitizen": {
+			"path": "./node_modules/cz-conventional-changelog"
+		}
+	}
 }
