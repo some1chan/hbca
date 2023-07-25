@@ -100,6 +100,8 @@
 			peer.reconnect();
 		});
 		peer.on("close", () => {
+			console.log("Closing peer");
+
 			// Just in case
 			for (const [, connection] of connections) {
 				connection.close();
@@ -114,7 +116,7 @@
 
 		// Handle incoming data
 		peer.on("connection", (connection) => {
-			console.log(`incoming peer connection!`);
+			console.log(`Incoming peer connection!`);
 			connection.on("open", () => {
 				// Version check: it's the responsibility of the client to deny requests
 				connection.send({
@@ -157,29 +159,33 @@
 							.length > 5
 					) {
 						console.log(
-							`Connection ${connection.metadata["username"]} (${connection.peer}) hasn't responded to 5 pings, disconnecting`
+							`Connection ${connection.metadata["username"]} (${connection.peer}) hasn't responded to 5 pings, disconnecting...`
 						);
-						heartbeatConnections.delete(connection.connectionId);
-						// connection.close();
-						clearInterval(pingInterval);
+						disconnectPeer(connection);
 					}
 					connections = connections;
 				}, 1_000);
 			});
 			connection.on("data", (data) => {
 				if (data["command"] == Packet.Ping) {
+					// Handles client-side keep-alive
 					connection.send({ command: Packet.Pong, sequence: data["sequence"] });
 					return;
 				} else if (data["command"] == Packet.Pong) {
-					// connection.send({ command: Packet.Pong, sequence: data["sequence"] });
-					const pingTracking = heartbeatConnections.get(
+					//
+					const heartbeatConnection = heartbeatConnections.get(
 						connection.connectionId
 					);
-					pingTracking.data.find(
+					if (!heartbeatConnection) {
+						console.error(
+							`Missing heartbeat connection ${connection.connectionId} upon receiving pong packet`
+						);
+					}
+					heartbeatConnection.data.find(
 						(p) => p.sequence == data["sequence"]
 					).timeToRespond = performance.now();
-					if (pingTracking.data.length >= 10) {
-						pingTracking.data.shift();
+					if (heartbeatConnection.data.length >= 10) {
+						heartbeatConnection.data.shift();
 					}
 					return;
 				}
@@ -200,17 +206,24 @@
 				}
 			});
 			connection.on("close", () => {
-				connections.delete(connection.peer);
-				connections = connections;
-
-				// Duplication
-				const heartbeat = heartbeatConnections.get(connection.connectionId);
-				if (heartbeat) {
-					clearInterval(heartbeat.pingInterval);
-					heartbeatConnections.delete(connection.connectionId);
-				}
+				console.log(
+					`Connection ${connection.peer} (${connection.connectionId}) disconnecting...`
+				);
+				disconnectPeer(connection);
 			});
 		});
+	}
+
+	function disconnectPeer(connection: DataConnection) {
+		connections.delete(connection.peer);
+		connections = connections;
+
+		// Duplication
+		const heartbeat = heartbeatConnections.get(connection.connectionId);
+		if (heartbeat) {
+			clearInterval(heartbeat.pingInterval);
+			heartbeatConnections.delete(connection.connectionId);
+		}
 	}
 
 	// Initiate outgoing connection
@@ -397,6 +410,15 @@
 	function getPing(connection: DataConnection) {
 		let failedToRespondCount = 0;
 		let index = heartbeatConnections.size - 1;
+		const heartbeatConnection = heartbeatConnections.get(
+			connection.connectionId
+		);
+		if (!heartbeatConnection) {
+			throw new ReferenceError(
+				`Missing heartbeat connection ${connection.connectionId}`
+			);
+		}
+
 		const heartbeatConnectionsValues = Array.from(
 			heartbeatConnections.get(connection.connectionId).data.values()
 		);
