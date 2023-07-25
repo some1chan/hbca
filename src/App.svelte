@@ -455,17 +455,19 @@
 						rel="noreferrer">guide</a
 					> on what to do.
 				</li>
+				{#if window.__TAURI_IPC__ == undefined}
+					<li>
+						<a
+							href="https://github.com/some1chan/hbca/releases"
+							class="text-blue-600 dark:text-blue-500 hover:underline"
+							target="_blank"
+							rel="noreferrer">Downloading the app</a
+						>
+						is preferable to the web app.
+					</li>
+				{/if}
 				<li>
-					<a
-						href="https://github.com/some1chan/hbca/releases"
-						class="text-blue-600 dark:text-blue-500 hover:underline"
-						target="_blank"
-						rel="noreferrer">Downloading the app</a
-					>
-					is preferable to the webapp.
-				</li>
-				<li>
-					Also, when stuff breaks (ex. you can't connect), use
+					When stuff breaks (ex. you can't connect), use
 					<code>Ctrl+R</code>
 					to reload.
 				</li>
