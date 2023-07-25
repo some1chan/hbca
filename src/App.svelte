@@ -675,12 +675,12 @@
 			<h2 class="mb-0">Countdown</h2>
 		</div>
 		<div
-			class="h-14 w-14 mb-3 {Number(visualCountdown) % 2 == 0
-				? 'bg-red-500 opacity-50'
-				: 'bg-red-500'} {Number.isNaN(Number(visualCountdown)) ||
+			class="h-14 w-14 mb-3 {Number.isNaN(Number(visualCountdown)) ||
 			visualCountdown == ''
 				? 'bg-blue-500'
-				: ''}"
+				: Number(visualCountdown) % 2 == 0
+				? 'bg-red-500 opacity-50'
+				: 'bg-red-500'}"
 		/>
 		<form class="select-none max-w-2xl">
 			<p class="text-xl mb-2">
