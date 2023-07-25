@@ -58,7 +58,7 @@
 				: urlParams.get("client").toLowerCase() == "false"
 				? false // If set to false, set to false
 				: undefined // Pass it along to the window IPC check
-			: undefined) ?? window.__TAURI_IPC__ != undefined;
+			: undefined) ?? true;
 	let copied = false;
 	let peer: Peer;
 	let peerText: HTMLInputElement;
