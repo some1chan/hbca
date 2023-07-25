@@ -428,6 +428,13 @@
 	title="high budget control application"
 	description="A very high budget control application for synchronizing inputs."
 	additionalMetaTags={[{ name: "theme-color", content: "#1a56db" }]}
+	openGraph={{
+		type: "website",
+		url: "https://hbca.pages.dev/",
+		title: "High Budget Control Application",
+		description:
+			"A very high budget control application for synchronizing inputs.",
+	}}
 />
 
 <main>
