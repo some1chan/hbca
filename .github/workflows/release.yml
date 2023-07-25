@@ -80,6 +80,6 @@ jobs:
         with:
           tagName: ${{ github.ref_name }} # This only works if your workflow triggers on new tags.
           releaseName: "HBCA v__VERSION__" # tauri-action replaces \_\_VERSION\_\_ with the app version.
-          releaseBody: "See the assets to download and install this version."
+          releaseBody: "Download HBCA by selecting either .msi or .exe in the Assets dropdown."
           releaseDraft: true
           prerelease: false
