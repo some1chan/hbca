@@ -477,17 +477,23 @@
 						rel="noreferrer">guide</a
 					> on what to do.
 				</li>
-				{#if window.__TAURI_IPC__ == undefined}
-					<li>
-						<a
-							href="https://github.com/some1chan/hbca/releases"
-							class="text-blue-600 dark:text-blue-500 hover:underline"
-							target="_blank"
-							rel="noreferrer">Downloading the app</a
-						>
-						is preferable to the web app.
-					</li>
-				{/if}
+				<li>
+					<a
+						href="https://github.com/some1chan/hbca/releases"
+						class="text-blue-600 dark:text-blue-500 hover:underline"
+						target="_blank"
+						rel="noreferrer">Downloading the app</a
+					>
+					is preferable to the web app.
+					<ul>
+						<li>
+							If you're worried about security: only the <code>F</code> key can
+							be pressed in a window titled
+							<code>UNBEATABLE [white label]</code> at this time. Connecting to a
+							server peer won't allow them to control anything else.
+						</li>
+					</ul>
+				</li>
 				<li>
 					When stuff breaks (ex. you can't connect), use
 					<code>Ctrl+R</code>
@@ -495,6 +501,9 @@
 				</li>
 			</ul>
 			<p>- some1chan</p>
+		</div>
+		<div class="format pt-2 pb-4 select-none">
+			<h2 class="mb-0">Peer Settings</h2>
 		</div>
 		<form
 			class="select-none max-w-2xl"
