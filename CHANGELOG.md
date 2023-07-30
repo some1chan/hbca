@@ -1,5 +1,11 @@
 # musician
 
+## 0.1.2
+
+### Patch Changes
+
+- Decrease input latency, enable devtools, and add Tauri metadata
+
 ## 0.1.1
 
 ### Patch Changes
