@@ -1,4 +1,10 @@
-# musician
+# HBCA
+
+## 0.1.3
+
+### Patch Changes
+
+- add hold time to fix inputs being dropped
 
 ## 0.1.2
 
