@@ -1,10 +1,10 @@
 [package]
 name = "hbca"
-version = "0.0.0"
-description = "A Tauri App"
+version = "0.1.2"
+description = " A high budget control application, for synchronizing inputs over the internet. "
 authors = ["some1chan"]
-license = ""
-repository = ""
+license = "OSL-3.0"
+repository = "https://github.com/some1chan/hbca"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
