@@ -311,21 +311,24 @@
 
 		metronomeIsPlaying = true;
 		visualCountdown = "4";
+		let handle = "0x0";
 		setTimeout(() => {
 			visualCountdown = "3";
 		}, 1_000);
 		setTimeout(() => {
 			visualCountdown = "2";
 		}, 2_000);
-		setTimeout(() => {
+		setTimeout(async () => {
 			visualCountdown = "1";
+			handle = await focusWindow();
 		}, 3_000);
 		setTimeout(async () => {
 			visualCountdown = "Go!";
-			if (input) {
-				const validHandle = await focusWindow();
-				if (validHandle) await sendInput();
+			console.time("Go time");
+			if (input && handle != "0x0") {
+				await sendInput();
 			}
+			console.timeEnd("Go time");
 		}, 4_000);
 		setTimeout(() => {
 			visualCountdown = "";
@@ -334,25 +337,28 @@
 	}
 
 	async function focusWindow() {
+		console.time("Get window handle");
 		if (window.__TAURI_IPC__ == undefined) return "0x0";
 		const handleString: string = await invoke("focus_window", {
 			windowName: "UNBEATABLE [white label]",
 		});
-		return handleString != "0x0";
+		console.timeEnd("Get window handle");
+		return handleString;
 	}
 
 	const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 	async function sendInput(delay = 0) {
 		if (delay > 0) await sleep(delay);
+		console.time("Pressing key");
 		if (window.__TAURI_IPC__ == undefined) {
 			console.log("Skipping pressing the key, Tauri IPC doesn't exist");
 			return;
 		}
-		console.log("Pressing key");
 		const result = await invoke("press_key", {
 			key: "f",
 		});
+		console.timeEnd("Pressing key");
 		if (result) {
 			console.error(result);
 		}
