@@ -357,6 +357,7 @@
 		}
 		const result = await invoke("press_key", {
 			key: "f",
+			holdTime: Math.round((2 / 60) * 1000),
 		});
 		console.timeEnd("Pressing key");
 		if (result) {

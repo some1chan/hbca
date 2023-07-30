@@ -8,6 +8,7 @@ fn greet(name: &str) -> String {
 }
 
 use std::ffi::CString;
+use std::{thread::sleep, time::Duration};
 use winapi::um::winuser::{FindWindowA, SetForegroundWindow};
 
 #[tauri::command]
@@ -23,13 +24,14 @@ fn focus_window(window_name: String) -> String {
 }
 
 #[tauri::command]
-fn press_key(key: char) -> Result<(), String> {
+fn press_key(key: char, hold_time: u64) -> Result<(), String> {
     // let static_char: &'static str = Box::leak(key.into_boxed_str());
     // inputbot::KeySequence(static_char).send();
 
     let keybd_key = inputbot::get_keybd_key(key);
     if let Some(keybd_key) = keybd_key {
         keybd_key.press();
+        sleep(Duration::from_millis(hold_time));
         keybd_key.release();
         Ok(())
     } else {
