@@ -40,6 +40,7 @@
 	// Connecting
 	import { type DataConnection, Peer } from "peerjs";
 	import { invoke } from "@tauri-apps/api/tauri";
+	import { emit, listen } from '@tauri-apps/api/event'
 
 	let selfPeerId = urlParams.get("id");
 
@@ -79,6 +80,14 @@
 		}
 	>();
 	getPeer();
+
+	if (isTauri) {
+		listen('interval', (event) => {
+			console.log(event.payload)
+			// event.event is the event name (useful if you want to use a single callback fn for multiple event types)
+			// event.payload is the payload object
+		})
+	}
 
 	function getPeer() {
 		peer = new Peer(selfPeerId, {

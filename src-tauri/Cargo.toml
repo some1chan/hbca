@@ -19,6 +19,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 inputbot = { git = "https://github.com/obv-mikhail/InputBot", branch = "develop" }
 winapi = "0.3.9"
+tokio = { version = "1.29.1", features = ["full"] }
+notify = "6.0.1"
+notify-debouncer-mini = { version = "*", default-features = false }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
