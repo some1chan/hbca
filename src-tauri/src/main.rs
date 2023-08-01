@@ -44,10 +44,46 @@ fn press_key(key: char, hold_time: u64) -> Result<(), String> {
     // }
 }
 
+#[tauri::command]
+fn get_offset_from_game_settings() -> Result<f64, String> {
+    let appdata = std::env::var("APPDATA").unwrap();
+
+    let unbeatable_path = format!(
+        "{}\\..\\LocalLow\\D-CELL GAMES\\UNBEATABLE [white label]",
+        appdata
+    );
+
+    let settings_path = format!("{}\\SYSTEM\\system-options.json", unbeatable_path);
+
+    // check if the file exists
+    let exists = std::path::Path::new(&settings_path).exists();
+
+    if !exists {
+        return Err(format!("Could not find settings file at {}", settings_path));
+    }
+
+    let file = match std::fs::read_to_string(settings_path) {
+        Ok(file) => file,
+        Err(e) => return Err(format!("Failed to read settings file: {}", e))
+    };
+
+    let json: serde_json::Value = match serde_json::from_str(&file) {
+        Ok(json) => json,
+        Err(e) => return Err(format!("Failed to parse settings file: {}", e))
+    };
+
+    let offset =    match json["rhythmTrackerPositionOffset"].as_f64() {
+        Some(offset) => offset,
+        None => return Err(format!("Failed to get offset from settings file"))
+    };
+
+    Ok(offset as f64)
+}
+
 fn main() {
     // inputbot::init_device();
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![greet, focus_window, press_key])
+        .invoke_handler(tauri::generate_handler![greet, focus_window, press_key, get_offset_from_game_settings])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

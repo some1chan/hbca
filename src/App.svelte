@@ -46,6 +46,10 @@
 	// Remove eventually:tm:
 	// const hardCodedId = "f84fc078-001d-4aad-90eb-059840ad798d";
 	// selfPeerId = window.__TAURI_IPC__ == undefined ? hardCodedId : "";
+	/**
+	 * Is the app running in Tauri?
+	*/
+	const isTauri = window.__TAURI_IPC__ != undefined;
 
 	let peerToConnectTo = urlParams.get("connect-to") ?? "";
 	// peerToConnectTo = window.__TAURI_IPC__ != undefined ? hardCodedId : "";
@@ -226,6 +230,15 @@
 		}
 	}
 
+	async function getGameOffset() {
+		const offsetInSeconds: number = await invoke("get_offset_from_game_settings");
+		console.log(`Offset from game settings: ${offsetInSeconds}`);
+		const offsetInMilliseconds = offsetInSeconds * 1000;
+		const offsetInMillisecondsRounded = Math.round(offsetInMilliseconds);
+		console.log(`Offset from game settings (rounded): ${offsetInMillisecondsRounded}ms`);
+		return offsetInMillisecondsRounded;
+	}
+
 	// Initiate outgoing connection
 	let outgoingConnection: DataConnection | undefined;
 	async function connectToPeer() {
@@ -338,7 +351,7 @@
 
 	async function focusWindow() {
 		console.time("Get window handle");
-		if (window.__TAURI_IPC__ == undefined) return "0x0";
+		if (!isTauri) return "0x0";
 		const handleString: string = await invoke("focus_window", {
 			windowName: "UNBEATABLE [white label]",
 		});
@@ -351,7 +364,7 @@
 	async function sendInput(delay = 0) {
 		if (delay > 0) await sleep(delay);
 		console.time("Pressing key");
-		if (window.__TAURI_IPC__ == undefined) {
+		if (!isTauri) {
 			console.log("Skipping pressing the key, Tauri IPC doesn't exist");
 			return;
 		}
@@ -690,6 +703,14 @@
 							? "Connecting..."
 							: "Disconnect"}</button
 					>
+					{#if isTauri}
+						<button
+							type="button"
+							on:click={getGameOffset}
+							class="py-2.5 px-5 text-sm w-full sm:w-auto font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+							>Get offset from the game</button
+						>
+					{/if}
 				{/if}
 				<!-- <button
 					type="button"
@@ -775,7 +796,7 @@
 				<button
 					type="button"
 					class="text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800 focus:outline-none dark:focus:ring-blue-800 disabled:bg-blue-400 disabled:dark:bg-blue-500 disabled:cursor-not-allowed"
-					disabled={window.__TAURI_IPC__ == undefined}
+					disabled={!isTauri}
 					on:click={() => {
 						focusWindow();
 					}}>Focus Window</button
@@ -784,7 +805,7 @@
 				<button
 					type="button"
 					class="text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800 focus:outline-none dark:focus:ring-blue-800 disabled:bg-blue-400 disabled:dark:bg-blue-500 disabled:cursor-not-allowed"
-					disabled={window.__TAURI_IPC__ == undefined}
+					disabled={!isTauri}
 					on:click={async () => {
 						await focusWindow();
 						await sendInput();
@@ -794,7 +815,7 @@
 				<button
 					type="button"
 					class="text-white bg-blue-700 hover:bg-blue-800 active:bg-blue-900 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:active:bg-blue-800 focus:outline-none dark:focus:ring-blue-800 disabled:bg-blue-400 disabled:dark:bg-blue-500 disabled:cursor-not-allowed"
-					disabled={metronomeIsPlaying || window.__TAURI_IPC__ == undefined}
+					disabled={metronomeIsPlaying || !isTauri}
 					on:click={async () => {
 						console.time("Audio ready");
 						await Tone.start();
