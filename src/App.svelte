@@ -40,21 +40,15 @@
 	// Connecting
 	import { type DataConnection, Peer } from "peerjs";
 	import { invoke } from "@tauri-apps/api/tauri";
-	import { emit, listen } from '@tauri-apps/api/event'
+	import { emit, listen } from "@tauri-apps/api/event";
 
 	let selfPeerId = urlParams.get("id");
-
-	// Remove eventually:tm:
-	// const hardCodedId = "f84fc078-001d-4aad-90eb-059840ad798d";
-	// selfPeerId = window.__TAURI_IPC__ == undefined ? hardCodedId : "";
 	/**
 	 * Is the app running in Tauri?
-	*/
+	 */
 	const isTauri = window.__TAURI_IPC__ != undefined;
 
 	let peerToConnectTo = urlParams.get("connect-to") ?? "";
-	// peerToConnectTo = window.__TAURI_IPC__ != undefined ? hardCodedId : "";
-
 	let username: string = urlParams.get("username") ?? "Beat";
 	let isClient: boolean =
 		(urlParams.get("client") != undefined // If client's defined
@@ -82,11 +76,11 @@
 	getPeer();
 
 	if (isTauri) {
-		listen('interval', (event) => {
-			console.log(event.payload)
+		listen("interval", (event) => {
+			console.log(event.payload);
 			// event.event is the event name (useful if you want to use a single callback fn for multiple event types)
 			// event.payload is the payload object
-		})
+		});
 	}
 
 	function getPeer() {
@@ -240,11 +234,15 @@
 	}
 
 	async function getGameOffset() {
-		const offsetInSeconds: number = await invoke("get_offset_from_game_settings");
+		const offsetInSeconds: number = await invoke(
+			"get_offset_from_game_settings"
+		);
 		console.log(`Offset from game settings: ${offsetInSeconds}`);
 		const offsetInMilliseconds = offsetInSeconds * 1000;
 		const offsetInMillisecondsRounded = Math.round(offsetInMilliseconds);
-		console.log(`Offset from game settings (rounded): ${offsetInMillisecondsRounded}ms`);
+		console.log(
+			`Offset from game settings (rounded): ${offsetInMillisecondsRounded}ms`
+		);
 		return offsetInMillisecondsRounded;
 	}
 
