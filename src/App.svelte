@@ -12,6 +12,7 @@
 		Pong = "Pong",
 		FatalError = "FatalError",
 		SendCountdown = "SendCountdown",
+		GameOffset = "GameOffset",
 	}
 
 	const urlParams = new URLSearchParams(window.location.search);
@@ -59,6 +60,7 @@
 				: undefined // Pass it along to the window IPC check
 			: undefined) ?? true;
 	let copied = false;
+	let gameOffset = Number(urlParams.get("game-offset")) ?? 0;
 	let peer: Peer;
 	let peerText: HTMLInputElement;
 	let connections = new Map<string, DataConnection>();
@@ -76,10 +78,28 @@
 	getPeer();
 
 	if (isTauri) {
-		listen("interval", (event) => {
-			console.log(event.payload);
-			// event.event is the event name (useful if you want to use a single callback fn for multiple event types)
+		setTimeout(async () => {
+			gameOffset = await getGameOffset();
+		}, 0);
+
+		listen("config_changed", (event) => {
+			console.log(`event.event: ${event.event}`);
+			console.log(`event.payload: ${event.payload}`);
+			// event.event is the event name (useful if you want to use a
+			// single callback fn for multiple event types)
 			// event.payload is the payload object
+
+			if (event.event == "config_changed") {
+				// Duplicated code
+				let newGameOffset = Math.round(Number(event.payload) * 1000);
+				if (Number.isNaN(newGameOffset)) {
+					newGameOffset = 0;
+				} else if (Math.abs(newGameOffset) > 3000) {
+					newGameOffset = 3000 * Math.sign(newGameOffset);
+				}
+				if (!newGameOffset) newGameOffset = 0;
+				gameOffset = newGameOffset;
+			}
 		});
 	}
 
@@ -125,11 +145,32 @@
 		peer.on("connection", (connection) => {
 			console.log(`Incoming peer connection!`);
 			connection.on("open", () => {
-				// Version check: it's the responsibility of the client to deny requests
+				// Version check: it's the responsibility of
+				// the client to deny requests
 				connection.send({
 					command: Packet.PeerVersion,
 					rpcVersion: rpcVersion,
 				});
+
+				// Data filtering (its duplicated and needs to be unduplicated,
+				// needs refactor if App.svelte ever gets broken up)
+				let gameOffset = Number(connection.metadata["gameOffset"]);
+				if (Number.isNaN(gameOffset)) {
+					connection.send({
+						command: Packet.FatalError,
+						error: `Invalid gameOffset (is NaN)`,
+					});
+					disconnectPeer(connection);
+					return;
+				} else if (Math.abs(gameOffset) > 3000) {
+					connection.send({
+						command: Packet.FatalError,
+						error: `Invalid gameOffset (is greater than 3000ms)`,
+					});
+					disconnectPeer(connection);
+					return;
+				}
+				if (!gameOffset) gameOffset = 0;
 
 				const oldConnection = connections.get(connection.peer);
 				if (oldConnection) {
@@ -137,7 +178,6 @@
 				}
 
 				connections.set(connection.peer, connection);
-				// connection.send("hello!");
 
 				// Heartbeat
 				let sequence = 0;
@@ -210,6 +250,18 @@
 					});
 					connection.close();
 					return;
+				} else if (data["command"] == Packet.GameOffset) {
+					let newGameOffset = Number(data["gameOffset"]);
+					if (Number.isNaN(newGameOffset)) {
+						console.warn("client sent invalid gameoffset packet parameter");
+						return;
+					} else if (Math.abs(newGameOffset) > 3000) {
+						console.warn("game offset too big");
+						return;
+					}
+					console.log(`change gameOffset to ${newGameOffset}`);
+					connection.metadata["gameOffset"] = newGameOffset;
+					return;
 				}
 			});
 			connection.on("close", () => {
@@ -233,10 +285,11 @@
 		}
 	}
 
-	async function getGameOffset() {
-		const offsetInSeconds: number = await invoke(
-			"get_offset_from_game_settings"
-		);
+	async function getGameOffset(rawOffsetInSeconds?: number) {
+		const offsetInSeconds: number =
+			rawOffsetInSeconds != undefined
+				? rawOffsetInSeconds
+				: await invoke("get_offset_from_game_settings");
 		console.log(`Offset from game settings: ${offsetInSeconds}`);
 		const offsetInMilliseconds = offsetInSeconds * 1000;
 		const offsetInMillisecondsRounded = Math.round(offsetInMilliseconds);
@@ -261,7 +314,7 @@
 		console.log(`Connecting to ${peerToConnectTo}...`);
 
 		let connection = peer.connect(peerToConnectTo, {
-			metadata: { username: username },
+			metadata: { username: username, gameOffset: gameOffset },
 		});
 		outgoingConnection = connection;
 
@@ -313,6 +366,15 @@
 			`Adjusted volume to ${metronomeVolume}% (${metronomeSampler.volume.value} dB)`
 		);
 	}
+	$: {
+		if (outgoingConnection) {
+			outgoingConnection.send({
+				command: Packet.GameOffset,
+				gameOffset,
+			});
+			console.log(`Sent gameOffset change to ${gameOffset}ms`);
+		}
+	}
 	let metronomeIsPlaying = false;
 	let visualCountdown = "";
 
@@ -357,8 +419,8 @@
 	}
 
 	async function focusWindow() {
-		console.time("Get window handle");
 		if (!isTauri) return "0x0";
+		console.time("Get window handle");
 		const handleString: string = await invoke("focus_window", {
 			windowName: "UNBEATABLE [white label]",
 		});
@@ -385,49 +447,124 @@
 		}
 	}
 
+	interface Timestamp {
+		connection: DataConnection;
+		timeToSend: number;
+	}
+
 	async function broadcastCountdown() {
 		metronomeIsPlaying = true;
 		console.time("Audio ready");
 		await Tone.start();
 		console.timeEnd("Audio ready");
 
-		// Get the largest ping
-		let largestPing = -1;
+		// Calculate the largest "song latency", being a combinatation of ping
+		// and game offset.
+		//
+		// This is because if the game offset is -500ms for example,
+		// if we theoretically send synced inputs according to just ping,
+		// the game offset will make the game run 500ms behind, and will
+		// start the chart 500ms behind.
+		let largestSongLatencyConnection: DataConnection;
+		let largestGlassToGlassLatency = -1;
+		let largestGameOffset = -1;
+
 		for (const [, connection] of connections) {
-			const ping = getPing(connection).recentPing;
-			largestPing = Math.max(ping, largestPing);
+			const glassToGlassLatency = getPing(connection).recentPing / 2;
+			const gameOffset = connection.metadata["gameOffset"];
+
+			// Set our defaults, if we don't have any
+			if (!largestSongLatencyConnection) {
+				largestSongLatencyConnection = connection;
+				largestGlassToGlassLatency = glassToGlassLatency;
+				largestGameOffset = -gameOffset;
+				continue;
+			}
+
+			// Grab the game offset
+			// Since negative game offset causes the game to be behind,
+			// if we do have negative offset, the ping needs to be earlier.
+			// 	0ms - -500ms = 500ms
+			//
+			// Also, positive game offset causes the game to be ahead,
+			// if we do have positive offset, the ping needs to be later.
+			//	0ms -  500ms = -500ms
+			// 		it's impossible to have negative ping,
+			// 		and we'll need to compensate for this.
+			const songLatencyConnection = glassToGlassLatency - -gameOffset;
+			if (songLatencyConnection > largestGameOffset) {
+				largestSongLatencyConnection = connection;
+				largestGlassToGlassLatency = glassToGlassLatency;
+				largestGameOffset = gameOffset;
+			}
+		}
+
+		// Calculate packets for countdowns on delayed timings
+		let timestamps: Timestamp[] = [];
+		for (const [, connection] of connections) {
+			const gameOffset = connection.metadata["gameOffset"];
+			const glassToGlassLatency = getPing(connection).recentPing / 2;
+			const timeToSend =
+				// largest GTG latency - current GTG latency is used to partly
+				// figure out which connections need to receive SendCountdown
+				// earlier. If it's the most delayed, this equation should be
+				// 0 to specify that it should be sent immediately.
+				(largestGlassToGlassLatency ?? 0) -
+				glassToGlassLatency -
+				// largest game offset - gameOffset is used in the same way.
+				// However, the existence of this section can cause negative
+				// time to send, which we'll fix later.
+				(largestGameOffset - gameOffset);
+
+			// Fill timestamps
+			timestamps.push({ connection, timeToSend });
+		}
+
+		// Filter for the timestamp with the least delay, and if this number is
+		// negative, we increase everything by it. This is to prevent suggesting
+		// to setTimeout() that we want to send a packet back in time, via a
+		// negative number.
+		//
+		// leastDelayedTimestamp is cloned, to prevent the function from changing
+		// the value, and making sure all values will not be negative numbers.
+		const leastDelayedTimeToSend: Timestamp = JSON.parse(
+			JSON.stringify(
+				timestamps.sort((a, b) => a.timeToSend - b.timeToSend)[0].timeToSend
+			)
+		);
+		if (leastDelayedTimeToSend?.timeToSend < 0) {
+			for (const timestamp of timestamps) {
+				// Using -= operator, as the value is negative,
+				// and double-negative makes it positive
+				timestamp.timeToSend -= leastDelayedTimeToSend.timeToSend;
+			}
 		}
 
 		// Send out packets for countdowns on delayed timings
-		for (const [, connection] of connections) {
-			// Connection with the largest amount of latency
-			// has its command sent out basically instantly,
-			// and everything else gets delayed based on it.
-			//
-			// See bottom comment about round-trip time for
-			// why we're dividing by two after our subtraction.
-			const ping = getPing(connection).recentPing;
-			console.log(`${connection.peer} - ${largestPing}-${ping}`);
+		for (const timestamp of timestamps) {
+			console.log(`${timestamp.connection.peer}: ${timestamp.timeToSend}ms`);
 			setTimeout(() => {
-				connection.send({
+				timestamp.connection.send({
 					command: Packet.SendCountdown,
 				});
-			}, (largestPing - ping) / 2);
+			}, timestamp.timeToSend);
 		}
 
-		// Ping is the round-trip time, and this assumes that the same amount
-		// of time sending data from server to client, is the same as client to
-		// server. We're only concerned about server to client here,
-		// so dividing by two is our only way to guess this.
-		await sleep(largestPing / 2);
-
+		// From there, get the most-delayed timestamp and use that,
+		// before doing a local countdown. Our latency towards ourselves
+		// is virtually 0ms.
+		const mostDelayedTimestamp = timestamps[timestamps.length - 1];
+		console.log(
+			`> ${mostDelayedTimestamp.connection.peer}: ${mostDelayedTimestamp.timeToSend}ms`
+		);
+		await sleep(mostDelayedTimestamp.timeToSend);
 		performLocalCountdown();
 	}
 
 	function getPingVisual(connection: DataConnection) {
 		const pingData = getPing(connection);
 		return (
-			`${pingData.recentPing}ms` +
+			`${Math.round(pingData.recentPing)}ms` +
 			(pingData.failedToRespondCount > 0
 				? ` (failed ${pingData.failedToRespondCount} times)`
 				: "")
@@ -577,9 +714,6 @@
 					readonly
 					disabled
 					bind:this={peerText}
-					on:blur={() => {
-						// copied = false;
-					}}
 				/>
 				<button
 					type="button"
@@ -696,6 +830,27 @@
 						/>
 					</div>
 				</div>
+				<div class="mb-4">
+					<label
+						for="offset"
+						class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+						>Game Offset (ms)</label
+					>
+					<input
+						type="number"
+						id="offset"
+						class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg read-only:cursor-not-allowed focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						placeholder="0"
+						autocomplete="off"
+						required
+						readonly={isTauri}
+						disabled={isTauri}
+						min={-3000}
+						max={3000}
+						step={1}
+						bind:value={gameOffset}
+					/>
+				</div>
 			{/if}
 
 			<div class="flex flex-row gap gap-2">
@@ -710,14 +865,6 @@
 							? "Connecting..."
 							: "Disconnect"}</button
 					>
-					{#if isTauri}
-						<button
-							type="button"
-							on:click={getGameOffset}
-							class="py-2.5 px-5 text-sm w-full sm:w-auto font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-							>Get offset from the game</button
-						>
-					{/if}
 				{/if}
 				<!-- <button
 					type="button"
@@ -732,11 +879,13 @@
 				<h2 class="mb-0">Connections</h2>
 			</div>
 			{#if connections.size == 0}<p>None, currently</p>{/if}
-			{#each Array.from(connections.values()) as connection}
-				<p>
-					{connection.metadata["username"]}: {getPingVisual(connection)} - {connection.peer}
-				</p>
-			{/each}
+			<code>
+				{#each Array.from(connections.values()) as connection}
+					{connection.metadata["username"]} ({connection.peer}) |
+					{connection.metadata["gameOffset"]}ms game offset,
+					{getPingVisual(connection)}
+				{/each}
+			</code>
 		{/if}
 
 		<div class="format pt-10 pb-4 select-none">
