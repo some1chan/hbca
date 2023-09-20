@@ -104,10 +104,22 @@
 	}
 
 	function getPeer() {
+		let config = {
+			iceServers: [
+				{ url: urlParams.get("ice_url") ?? "stun:stun.l.google.com:19302" },
+			],
+		};
+		const rawPeerConfig = urlParams.get("peer_config");
+		if (rawPeerConfig) {
+			const peerConfig = rawPeerConfig.replace(/_/g, "/").replace(/-/g, "+");
+			console.log(`Config: ${peerConfig}`);
+			const decodedBase64 = atob(peerConfig);
+			console.log(decodedBase64);
+			const json = JSON.parse(decodedBase64);
+			config = json;
+		}
 		peer = new Peer(selfPeerId, {
-			config: {
-				iceServers: [{ url: "stun:stun.l.google.com:19302" }],
-			},
+			config: config,
 		});
 
 		// Register with the peer server
