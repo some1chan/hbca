@@ -164,7 +164,7 @@
 					rpcVersion: rpcVersion,
 				});
 
-				// Data filtering (its duplicated and needs to be unduplicated,
+				// Data filtering (its duplicated and needs to be deduplicated,
 				// needs refactor if App.svelte ever gets broken up)
 				let gameOffset = Number(connection.metadata["gameOffset"]);
 				if (Number.isNaN(gameOffset)) {
@@ -470,7 +470,7 @@
 		await Tone.start();
 		console.timeEnd("Audio ready");
 
-		// Calculate the largest "song latency", being a combinatation of ping
+		// Calculate the largest "song latency", being a combination of ping
 		// and game offset.
 		//
 		// This is because if the game offset is -500ms for example,
