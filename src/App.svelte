@@ -444,11 +444,11 @@
 
 	async function sendInput(delay = 0) {
 		if (delay > 0) await sleep(delay);
-		console.time("Pressing key");
 		if (!isTauri) {
 			console.log("Skipping pressing the key, Tauri IPC doesn't exist");
 			return;
 		}
+		console.time("Pressing key");
 		const result = await invoke("press_key", {
 			key: "f",
 			holdTime: Math.round((2 / 60) * 1000),
