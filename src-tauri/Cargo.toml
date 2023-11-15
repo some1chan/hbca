@@ -1,6 +1,6 @@
 [package]
 name = "hbca"
-version = "0.2.1"
+version = "0.2.2"
 description = " A high budget control application, for synchronizing inputs over the internet. "
 authors = ["some1chan"]
 license = "OSL-3.0"
