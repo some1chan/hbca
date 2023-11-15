@@ -632,6 +632,7 @@
 		title: "High Budget Control Application",
 		description:
 			"A very high budget control application for synchronizing inputs.",
+		images: []
 	}}
 />
 
