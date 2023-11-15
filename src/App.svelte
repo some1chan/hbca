@@ -475,23 +475,20 @@
 		//
 		// This is because if the game offset is -500ms for example,
 		// if we theoretically send synced inputs according to just ping,
-		// the game offset will make the game run 500ms behind, and will
-		// start the chart 500ms behind.
-		let largestSongLatencyConnection: DataConnection;
+		// the game offset will make the chart send the first note with
+		// a 500ms delay compared to what's normal (0ms game offset).
+		//
+		// If it was positive instead, the chart will send that first note
+		// 500ms before what's normal.
+		let largestSongLatencyConnection: DataConnection | undefined;
 		let largestGlassToGlassLatency = -1;
-		let largestGameOffset = -1;
+		let largestGameOffset = -Infinity;
+
+		let largestSongLatencyMs = -Infinity;
 
 		for (const [, connection] of connections) {
 			const glassToGlassLatency = getPing(connection).recentPing / 2;
 			const gameOffset = connection.metadata["gameOffset"];
-
-			// Set our defaults, if we don't have any
-			if (!largestSongLatencyConnection) {
-				largestSongLatencyConnection = connection;
-				largestGlassToGlassLatency = glassToGlassLatency;
-				largestGameOffset = -gameOffset;
-				continue;
-			}
 
 			// Grab the game offset
 			// Since negative game offset causes the game to be behind,
@@ -504,12 +501,20 @@
 			// 		it's impossible to have negative ping,
 			// 		and we'll need to compensate for this.
 			const songLatencyConnection = glassToGlassLatency - -gameOffset;
-			if (songLatencyConnection > largestGameOffset) {
+			if (songLatencyConnection > largestSongLatencyMs) {
 				largestSongLatencyConnection = connection;
 				largestGlassToGlassLatency = glassToGlassLatency;
 				largestGameOffset = gameOffset;
+				largestSongLatencyMs = songLatencyConnection;
 			}
 		}
+		if (!largestSongLatencyConnection) throw new Error();
+
+		console.log(
+			`largestSongLatencyConnection: ${largestSongLatencyConnection.metadata["username"]} (${largestSongLatencyConnection.peer})`
+		);
+		console.log(`largestGlassToGlassLatency: ${largestGlassToGlassLatency}`);
+		console.log(`largestGameOffset: ${largestGameOffset}`);
 
 		// Calculate packets for countdowns on delayed timings
 		let timestamps: Timestamp[] = [];
@@ -536,19 +541,14 @@
 		// negative, we increase everything by it. This is to prevent suggesting
 		// to setTimeout() that we want to send a packet back in time, via a
 		// negative number.
-		//
-		// leastDelayedTimestamp is cloned, to prevent the function from changing
-		// the value, and making sure all values will not be negative numbers.
-		const leastDelayedTimeToSend: Timestamp = JSON.parse(
-			JSON.stringify(
-				timestamps.sort((a, b) => a.timeToSend - b.timeToSend)[0].timeToSend
-			)
-		);
-		if (leastDelayedTimeToSend?.timeToSend < 0) {
+		const leastDelayedTimeToSend = timestamps.sort(
+			(a, b) => a.timeToSend - b.timeToSend
+		)[0].timeToSend;
+		if (leastDelayedTimeToSend < 0) {
 			for (const timestamp of timestamps) {
 				// Using -= operator, as the value is negative,
 				// and double-negative makes it positive
-				timestamp.timeToSend -= leastDelayedTimeToSend.timeToSend;
+				timestamp.timeToSend -= leastDelayedTimeToSend;
 			}
 		}
 
