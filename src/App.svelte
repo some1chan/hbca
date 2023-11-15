@@ -632,7 +632,7 @@
 		title: "High Budget Control Application",
 		description:
 			"A very high budget control application for synchronizing inputs.",
-		images: []
+		images: [],
 	}}
 />
 
@@ -896,7 +896,7 @@
 				{#each Array.from(connections.values()) as connection}
 					{connection.metadata["username"]} ({connection.peer}) |
 					{connection.metadata["gameOffset"]}ms game offset,
-					{getPingVisual(connection)}
+					{getPingVisual(connection)}<br />
 				{/each}
 			</code>
 		{/if}
