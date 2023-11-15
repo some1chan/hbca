@@ -67,7 +67,7 @@
 	let heartbeatConnections = new Map<
 		string,
 		{
-			pingInterval?: NodeJS.Timer;
+			pingInterval?: number;
 			data: {
 				timeToSend: number;
 				timeToRespond: number | undefined;
@@ -223,7 +223,7 @@
 						disconnectPeer(connection);
 					}
 					connections = connections;
-				}, 1_000);
+				}, 1_000) as unknown as number; // TypeScript Node.js garbage
 			});
 			connection.on("data", (data) => {
 				if (data["command"] == Packet.Ping) {
@@ -265,7 +265,7 @@
 				} else if (data["command"] == Packet.GameOffset) {
 					let newGameOffset = Number(data["gameOffset"]);
 					if (Number.isNaN(newGameOffset)) {
-						console.warn("client sent invalid gameoffset packet parameter");
+						console.warn("client sent invalid gameOffset packet parameter");
 						return;
 					} else if (Math.abs(newGameOffset) > 3000) {
 						console.warn("game offset too big");
