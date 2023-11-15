@@ -11,10 +11,12 @@ The host is the person who will trigger the competitor's HBCA applications to pr
 
 1. Go to https://hbca.pages.dev (this guarantees you'll be running the latest version).
 
-2. Give your peer ID to all competitors.
+2. Uncheck the "Is Client" checkbox. This is required if you're a host.
+
+3. Give your peer ID to all competitors.
     > This technically exposes your IP, as it does with all competitors that connect to you. This is because this is a peer-to-peer app, and you should connect only to people you trust.
 
-3. Once everyone's connected, and they've put the cassette into the player in-game, press the Start Countdown button.
+4. Once everyone's connected, and they've put the cassette into the player in-game, press the Start Countdown button.
     > Note the delay of when it finishes doing the countdown on your side, and when it'll visually appear. If you're using the restreaming servers via RTMP or SRT, the delay will be pretty large, so don't do a countdown in voice chat in production!
 
 ### As a competitor
